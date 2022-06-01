@@ -9,6 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kpem-aberrate", "kpem-aberr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "network-base", "network-base\network-base.csproj", "{9B802348-94E9-4CD2-80A2-7C34B298A429}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E143AF5-A7B2-4E57-BB80-2766D939897C}"
+	ProjectSection(SolutionItems) = preProject
+		kpem-flux.sln = kpem-flux.sln
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
