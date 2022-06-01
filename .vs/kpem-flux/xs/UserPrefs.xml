@@ -1,0 +1,42 @@
+﻿<Properties StartupConfiguration="{8707AFA4-F1E8-431F-9D9E-04FE4AF56D71}|Default" GitUserInfo="UsingGIT">
+  <MonoDevelop.Ide.ItemProperties.kpem-aberrate PreferredExecutionTarget="MonoDevelop.Default" />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="kpem-aberrate/Program.cs">
+    <Files>
+      <File FileName="kpem-aberrate/AuthenticationHelper.cs" Line="13" Column="1" />
+      <File FileName="kpem-aberrate/DatabaseHandler.cs" Line="22" Column="33" />
+      <File FileName="kpem-aberrate/Program.cs" Line="155" Column="22" />
+      <File FileName="kpem-flux/Program.cs" Line="49" Column="32" />
+      <File FileName="kpem-flux/ConnectionHandler.cs" Line="34" Column="73" />
+      <File FileName="network-base/NetworkHelper.cs" Line="24" Column="27" />
+      <File FileName="kpem-flux/ConsoleHelper.cs" Line="86" Column="26" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="kpem-flux" expanded="True">
+            <Node name="kpem-aberrate" expanded="True">
+              <Node name="Dependencies" expanded="True">
+                <Node name="FrameworkReferences" expanded="True" />
+                <Node name="PackageDependencies" expanded="True" />
+              </Node>
+            </Node>
+            <Node name="kpem-flux" expanded="True">
+              <Node name="Dependencies" expanded="True" />
+            </Node>
+            <Node name="network-base" expanded="True" />
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State />
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.ItemProperties.kpem-flux PreferredExecutionTarget="MonoDevelop.Default" />
+</Properties>

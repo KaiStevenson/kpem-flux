@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1700.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kpem-flux", "kpem-flux\kpem-flux.csproj", "{B73CCE95-EE95-4BC8-A06F-96CE2287D8CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kpem-aberrate", "kpem-aberrate\kpem-aberrate.csproj", "{8707AFA4-F1E8-431F-9D9E-04FE4AF56D71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "network-base", "network-base\network-base.csproj", "{9B802348-94E9-4CD2-80A2-7C34B298A429}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B73CCE95-EE95-4BC8-A06F-96CE2287D8CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B73CCE95-EE95-4BC8-A06F-96CE2287D8CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B73CCE95-EE95-4BC8-A06F-96CE2287D8CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B73CCE95-EE95-4BC8-A06F-96CE2287D8CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8707AFA4-F1E8-431F-9D9E-04FE4AF56D71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8707AFA4-F1E8-431F-9D9E-04FE4AF56D71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8707AFA4-F1E8-431F-9D9E-04FE4AF56D71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8707AFA4-F1E8-431F-9D9E-04FE4AF56D71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B802348-94E9-4CD2-80A2-7C34B298A429}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B802348-94E9-4CD2-80A2-7C34B298A429}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B802348-94E9-4CD2-80A2-7C34B298A429}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B802348-94E9-4CD2-80A2-7C34B298A429}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C68787B1-1721-4919-9076-0A37AAB33E58}
+	EndGlobalSection
+EndGlobal

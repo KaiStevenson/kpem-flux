@@ -1,0 +1,36 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "kpem-flux/1.0.0": {
+        "dependencies": {
+          "network-base": "1.0.0"
+        },
+        "runtime": {
+          "kpem-flux.dll": {}
+        }
+      },
+      "network-base/1.0.0": {
+        "runtime": {
+          "network-base.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "kpem-flux/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "network-base/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
