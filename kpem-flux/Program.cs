@@ -43,18 +43,29 @@ class Program
     }
     public void Run()
     {
-        ConsoleHelper.PanDownAndClearAsync(1250).Wait();
-        ConsoleHelper.WriteLine("--Flux v0.1--", ConsoleColor.Magenta);
-        var toCreateNewAccount = ConsoleHelper.GetBinaryChoice("Create new account?");
-        if (toCreateNewAccount)
+        //Start the main menu
+        while (true)
         {
-            ConsoleHelper.WriteLine("Create an account");
-            CreateNewUser();
+            UI();
         }
-        ConsoleHelper.WriteLine("Sign in");
-        AuthenticateUser();
-        //End of program reached
-        handler.Disconnect();
+    }
+    private void UI()
+    {
+        ConsoleHelper.PanDownAndClearAsync(50).Wait();
+        ConsoleHelper.WriteLine("--Flux v0.1 Main Menu--", ConsoleColor.Magenta);
+        var n = ConsoleHelper.GetNumericChoice("Make a choice", "Log in", "Create an account", "Open config file");
+        switch (n)
+        {
+            case 1:
+                AuthenticateUser();
+                break;
+            case 2:
+                if (ConsoleHelper.GetBinaryChoice("Are you sure?"))
+                {
+                    CreateNewUser();
+                }
+                break;
+        }
     }
     private void CreateNewUser()
     {

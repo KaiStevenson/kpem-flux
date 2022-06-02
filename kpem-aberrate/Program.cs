@@ -68,7 +68,8 @@ class Program
             var outgoingClient = new TcpClient();
             Console.WriteLine("Attempting to connect outgoing client");
             await outgoingClient.ConnectAsync(remoteEndpoint.Address, 9852);
-            users.Add(new User(outgoingClient, incomingClient));
+            var user = new User(outgoingClient, incomingClient);
+            users.Add(user);
             Console.WriteLine("Outgoing client connected, user added");
             //Delay to make sure the user is listening before we send our key
             //TODO: Consider only sending the key when the user requests it
@@ -76,8 +77,7 @@ class Program
             {
                 await Task.Delay(2500);
                 Console.WriteLine("Sending RSA key to client");
-                NetworkHelper.WriteMessageToNetworkStream(outgoingClient.GetStream(),
-                    new Message("sendrsa", new Message.Parameter("key", Convert.ToBase64String(rsaPublicKey))),
+                SendMessage(user, new Message("sendrsa", new Message.Parameter("key", Convert.ToBase64String(rsaPublicKey))),
                     NetworkHelper.EncryptionMode.None);
             }
             else
@@ -87,7 +87,22 @@ class Program
         }
     }
 
-    //TODO: Implement wrapper for send message function to catch client disconnect
+    private void SendMessage(User user, Message message, NetworkHelper.EncryptionMode mode, byte[]? key = null)
+    {
+        try
+        {
+            NetworkHelper.WriteMessageToNetworkStream(user.outgoingClient.GetStream(), message, mode, key);
+        }
+        catch
+        {
+            Console.WriteLine("Messaging user failed");
+            if (!user.incomingClient.Connected || !user.outgoingClient.Connected)
+            {
+                Console.WriteLine("Removed user as they were already disconnected");
+                RemoveUser(user);
+            }
+        }
+    }
 
     //This method is potentially CPU bound
     private void HandleUsers()
@@ -105,34 +120,30 @@ class Program
             }
             else
             {
-                //First, check if the socket has been disconnected.
-                if (!user.incomingClient.Connected || !user.outgoingClient.Connected)
-                {
-                    //This might be unreachable if the program will throw an exception when failing a network write
-                    Console.WriteLine("Removed user {0} as they were already disconnected");
-                    removeList.Add(user);
-                }
                 //Then, check for inactivity
                 var timeSinceLastMessage = DateTime.UtcNow - user.timeOfLastMessage;
-                var outgoingStream = user.outgoingClient.GetStream();
                 if (timeSinceLastMessage.TotalSeconds > 120 && !user.inactivityWarned)
                 {
-                    NetworkHelper.WriteMessageToNetworkStream(outgoingStream, new Message("ping"), NetworkHelper.EncryptionMode.None);
+                    SendMessage(user, new Message("ping"), NetworkHelper.EncryptionMode.None);
                     user.inactivityWarned = true;
                 }
                 else if (timeSinceLastMessage.TotalSeconds > 135)
                 {
-                    Console.WriteLine("Removed user {0} due to inactivity");
+                    Console.WriteLine("Removed user due to inactivity");
                     removeList.Add(user);
                 }
             }
         }
         foreach (var user in removeList)
         {
-            user.incomingClient.Client.Disconnect(true);
-            user.outgoingClient.Client.Disconnect(true);
-            users.Remove(user);
+            RemoveUser(user);
         }
+    }
+    private void RemoveUser(User user)
+    {
+        user.incomingClient.Client.Disconnect(true);
+        user.outgoingClient.Client.Disconnect(true);
+        users.Remove(user);
     }
     //This method will handle every incoming message from a network stream. The user parameter is derived from the socket, but is probably not secure
     private async Task HandleMessages(NetworkStream ns, User user)
@@ -143,6 +154,9 @@ class Program
             Console.WriteLine(String.Format("New message received with command {0} from user {1}", message.Command, user.username));
             switch (message.Command)
             {
+                case "ping":
+                    SendMessage(user, new Message("pong"), NetworkHelper.EncryptionMode.None);
+                    break;
                 case "sendaes":
                     Console.WriteLine("Received AES key " + message.Content["key"]);
                     user.AESKey = Convert.FromBase64String(message.Content["key"]);

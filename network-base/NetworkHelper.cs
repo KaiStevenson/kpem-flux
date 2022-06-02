@@ -29,7 +29,6 @@ public static class NetworkHelper
             bytesRead += await ns.ReadAsync(bytes, 0, length);
         }
         //Decrypt the message, if needed
-        Console.WriteLine("Message received with encryption type " + encryptionByte[0]);
         if (encryptionByte[0] == 0)
         {
             return new Message(bytes);
@@ -53,7 +52,7 @@ public static class NetworkHelper
         }
         else if (encryptionByte[0] == 2)
         {
-            if(rsaKey == null)
+            if (rsaKey == null)
             {
                 throw new Exception("Can't read RSA encrypted message without RSA private key");
             }
@@ -74,13 +73,13 @@ public static class NetworkHelper
         var json = JsonSerializer.Serialize(message, options);
         var bytes = Encoding.UTF8.GetBytes(json);
 
-        if(mode == EncryptionMode.None)
+        if (mode == EncryptionMode.None)
         {
             WriteMessageBytesToNetworkStream(ns, bytes, mode);
         }
-        else if(mode == EncryptionMode.AES)
+        else if (mode == EncryptionMode.AES)
         {
-            if(key == null)
+            if (key == null)
             {
                 throw new Exception("Cannot AES encrypt message without AES key");
             }

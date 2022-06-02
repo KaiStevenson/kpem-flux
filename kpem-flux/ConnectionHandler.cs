@@ -85,6 +85,12 @@ public class ConnectionHandler
             }
         }
         //Switch case for consistently handled messages
+        switch (message.Command)
+        {
+            case "ping":
+                SendMessage(new Message("pong"), NetworkHelper.EncryptionMode.None);
+                break;
+        }
     }
     //This method returns control to calling thread until a message is received with a given command
     //Or until a timeout is reached
