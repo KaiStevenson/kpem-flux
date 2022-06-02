@@ -16,6 +16,20 @@ public static class ConsoleHelper
             Console.ForegroundColor = oldColor;
         }
     }
+    public static void ClearLine(int row)
+    {
+        var cursorDown = Console.CursorTop;
+        Console.SetCursorPosition(0, row);
+        Console.Write(new string(' ', Console.BufferWidth));
+        Console.SetCursorPosition(0, cursorDown);
+    }
+    public static void ClearLines(int fromRow, int toRow)
+    {
+        for (int i = fromRow; i < toRow; i++)
+        {
+            ClearLine(i);
+        }
+    }
     public static string GetInput(string prompt = "Enter data", ObscurityType obscurity = ObscurityType.AllVisible)
     {
         Console.Write(String.Format("{0} >> ", prompt));
@@ -108,12 +122,10 @@ public static class ConsoleHelper
         }
         Console.Clear();
         //If necessary, clear the scrollback buffer
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-        if (Environment.GetEnvironmentVariable("TERM").StartsWith("xterm"))
+        if (Environment.GetEnvironmentVariable("TERM")!.StartsWith("xterm"))
         {
             Console.Write("\x1b[3J");
         }
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
     public enum ObscurityType
     {
@@ -123,4 +135,80 @@ public static class ConsoleHelper
         NoFeedback
     }
 }
+public class MenuLevel
+{
+    public MenuItem[]? items;
+    public MenuLevel? parentLevel;
+    public string name;
+    private bool allowBack;
+    public MenuLevel(bool allowBack, MenuLevel? parentLevel = null, string menuName = "Menu")
+    {
+        this.parentLevel = parentLevel;
+        this.allowBack = allowBack;
+        this.name = menuName;
+    }
+    private void Init()
+    {
 
+    }
+    public void EnterMenu()
+    {
+        int cursorDownStart = Console.CursorTop;
+        if (items != null)
+        {
+            //Create a new temporary array that we can modify
+            MenuItem[] tempItems = items;
+            if (allowBack)
+            {
+                tempItems = tempItems.Append(new MenuItem("Return", parentLevel!)).ToArray();
+            }
+            Console.WriteLine(String.Format("{0}:", name));
+            string[] choicesNames = new string[tempItems.Length];
+            for (int i = 0; i < tempItems.Length; i++)
+            {
+                choicesNames[i] = tempItems[i].name;
+            }
+            var c = ConsoleHelper.GetNumericChoice("Make a choice", choicesNames) - 1;
+            if (tempItems[c].Mode == MenuItem.MenuItemMode.Action)
+            {
+                tempItems[c].action!.Invoke();
+            }
+            else if (tempItems[c].Mode == MenuItem.MenuItemMode.MenuLevelLink)
+            {
+                ConsoleHelper.ClearLines(cursorDownStart, Console.CursorTop);
+                Console.SetCursorPosition(0, cursorDownStart);
+                tempItems[c].linkedLevel!.EnterMenu();
+            }
+        }
+        else
+        {
+            throw new Exception("Menu level not ready: missing items");
+        }
+    }
+    public class MenuItem
+    {
+        public string name;
+        public Action? action;
+        public MenuLevel? linkedLevel;
+        public MenuItemMode Mode { get; private set; }
+        public MenuItem(string name, Action? action)
+        {
+            this.name = name;
+            this.linkedLevel = null;
+            this.action = action;
+            Mode = MenuItemMode.Action;
+        }
+        public MenuItem(string name, MenuLevel? linkedLevel)
+        {
+            this.name = name;
+            this.linkedLevel = linkedLevel;
+            this.action = null;
+            Mode = MenuItemMode.MenuLevelLink;
+        }
+        public enum MenuItemMode
+        {
+            Action,
+            MenuLevelLink
+        }
+    }
+}

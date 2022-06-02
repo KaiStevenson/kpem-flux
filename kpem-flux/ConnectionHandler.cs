@@ -52,9 +52,7 @@ public class ConnectionHandler
     {
         if (Available)
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-            NetworkHelper.WriteMessageToNetworkStream(outgoingClient.GetStream(), message, mode, key);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            NetworkHelper.WriteMessageToNetworkStream(outgoingClient!.GetStream(), message, mode, key);
         }
         else
         {

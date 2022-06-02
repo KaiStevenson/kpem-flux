@@ -55,21 +55,37 @@ class Program
         ConsoleHelper.PanDownAndClearAsync(50).Wait();
         ConsoleHelper.WriteLine("--Flux v0.1 Main Menu--", ConsoleColor.Magenta);
         ConsoleHelper.WriteLine(GetStatus());
-        var n = ConsoleHelper.GetNumericChoice("Make a choice", "Log in", "Create an account", "Open config file");
-        switch (n)
-        {
-            case 1:
-                AuthenticateUser();
-                ConsoleHelper.WaitForKeypressToContinue();
-                break;
-            case 2:
-                if (ConsoleHelper.GetBinaryChoice("Are you sure?"))
-                {
-                    CreateNewUser();
-                }
-                ConsoleHelper.WaitForKeypressToContinue();
-                break;
-        }
+        //Define all the layers of the menu so that we can interconnnect them
+        MenuLevel mainMenu = new MenuLevel(false, menuName: "Main");
+        MenuLevel userMenu = new MenuLevel(true, parentLevel: mainMenu, menuName: "User");
+        //Now define the items in each layer
+        mainMenu.items = new MenuLevel.MenuItem[] {
+            new MenuLevel.MenuItem("Sign in/Create account", userMenu),
+            new MenuLevel.MenuItem("Start messaging another user", AuthenticateUser),
+            new MenuLevel.MenuItem("Open config file", AuthenticateUser)
+        };
+        userMenu.items = new MenuLevel.MenuItem[] {
+            new MenuLevel.MenuItem("Sign in", AuthenticateUser),
+            new MenuLevel.MenuItem("Create account", CreateNewUser)
+        };
+        //Now run the menu
+        mainMenu.EnterMenu();
+
+        //var n = ConsoleHelper.GetNumericChoice("Make a choice", "Log in", "Create an account", "Open config file");
+        //switch (n)
+        //{
+        //    case 1:
+        //        AuthenticateUser();
+        //        ConsoleHelper.WaitForKeypressToContinue();
+        //        break;
+        //    case 2:
+        //        if (ConsoleHelper.GetBinaryChoice("Are you sure?"))
+        //        {
+        //            CreateNewUser();
+        //        }
+        //        ConsoleHelper.WaitForKeypressToContinue();
+        //        break;
+        //}
     }
     private string GetStatus()
     {
