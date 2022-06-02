@@ -147,10 +147,6 @@ public class MenuLevel
         this.allowBack = allowBack;
         this.name = menuName;
     }
-    private void Init()
-    {
-
-    }
     public void EnterMenu()
     {
         int cursorDownStart = Console.CursorTop;
@@ -169,15 +165,25 @@ public class MenuLevel
                 choicesNames[i] = tempItems[i].name;
             }
             var c = ConsoleHelper.GetNumericChoice("Make a choice", choicesNames) - 1;
-            if (tempItems[c].Mode == MenuItem.MenuItemMode.Action)
+            if (tempItems[c].askForConfirmation ? ConsoleHelper.GetBinaryChoice("Are you sure?") : true)
             {
-                tempItems[c].action!.Invoke();
+                if (tempItems[c].Mode == MenuItem.MenuItemMode.Action)
+                {
+                    tempItems[c].action!.Invoke();
+                }
+                else if (tempItems[c].Mode == MenuItem.MenuItemMode.MenuLevelLink)
+                {
+                    ConsoleHelper.ClearLines(cursorDownStart, Console.CursorTop);
+                    Console.SetCursorPosition(0, cursorDownStart);
+                    tempItems[c].linkedLevel!.EnterMenu();
+                }
             }
-            else if (tempItems[c].Mode == MenuItem.MenuItemMode.MenuLevelLink)
+            //Confirmation failed, reload the same menu level
+            else
             {
                 ConsoleHelper.ClearLines(cursorDownStart, Console.CursorTop);
                 Console.SetCursorPosition(0, cursorDownStart);
-                tempItems[c].linkedLevel!.EnterMenu();
+                EnterMenu();
             }
         }
         else
@@ -190,19 +196,22 @@ public class MenuLevel
         public string name;
         public Action? action;
         public MenuLevel? linkedLevel;
+        public bool askForConfirmation;
         public MenuItemMode Mode { get; private set; }
-        public MenuItem(string name, Action? action)
+        public MenuItem(string name, Action action, bool askForConfirmation = false)
         {
             this.name = name;
             this.linkedLevel = null;
             this.action = action;
+            this.askForConfirmation = askForConfirmation;
             Mode = MenuItemMode.Action;
         }
-        public MenuItem(string name, MenuLevel? linkedLevel)
+        public MenuItem(string name, MenuLevel linkedLevel, bool askForConfirmation = false)
         {
             this.name = name;
             this.linkedLevel = linkedLevel;
             this.action = null;
+            this.askForConfirmation = askForConfirmation;
             Mode = MenuItemMode.MenuLevelLink;
         }
         public enum MenuItemMode

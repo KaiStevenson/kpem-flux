@@ -44,33 +44,32 @@ class Program
     }
     public void Run()
     {
-        //Start the main menu
-        while (true)
-        {
-            UI();
-        }
+        UI();
     }
     private void UI()
     {
-        ConsoleHelper.PanDownAndClearAsync(50).Wait();
-        ConsoleHelper.WriteLine("--Flux v0.1 Main Menu--", ConsoleColor.Magenta);
-        ConsoleHelper.WriteLine(GetStatus());
-        //Define all the layers of the menu so that we can interconnnect them
-        MenuLevel mainMenu = new MenuLevel(false, menuName: "Main");
-        MenuLevel userMenu = new MenuLevel(true, parentLevel: mainMenu, menuName: "User");
-        //Now define the items in each layer
-        mainMenu.items = new MenuLevel.MenuItem[] {
-            new MenuLevel.MenuItem("Sign in/Create account", userMenu),
-            new MenuLevel.MenuItem("Start messaging another user", AuthenticateUser),
-            new MenuLevel.MenuItem("Open config file", AuthenticateUser)
-        };
-        userMenu.items = new MenuLevel.MenuItem[] {
-            new MenuLevel.MenuItem("Sign in", AuthenticateUser),
-            new MenuLevel.MenuItem("Create account", CreateNewUser)
-        };
-        //Now run the menu
-        mainMenu.EnterMenu();
-
+        while (true)
+        {
+            ConsoleHelper.PanDownAndClearAsync(50).Wait();
+            ConsoleHelper.WriteLine("--Flux v0.1 Main Menu--", ConsoleColor.Magenta);
+            ConsoleHelper.WriteLine(GetStatus());
+            //Define all the layers of the menu so that we can interconnnect them
+            MenuLevel mainMenu = new MenuLevel(false, menuName: "Main");
+            MenuLevel userMenu = new MenuLevel(true, parentLevel: mainMenu, menuName: "User");
+            //Now define the items in each layer
+            mainMenu.items = new MenuLevel.MenuItem[] {
+                new MenuLevel.MenuItem("Sign in/Create account", userMenu),
+                new MenuLevel.MenuItem("Start messaging another user", AuthenticateUser),
+                new MenuLevel.MenuItem("Open config file", AuthenticateUser)
+            };
+            userMenu.items = new MenuLevel.MenuItem[] {
+                new MenuLevel.MenuItem("Sign in", AuthenticateUser),
+                new MenuLevel.MenuItem("Create account", CreateNewUser, askForConfirmation: true)
+            };
+            //Now run the menu
+            mainMenu.EnterMenu();
+            ConsoleHelper.WaitForKeypressToContinue();
+        }
         //var n = ConsoleHelper.GetNumericChoice("Make a choice", "Log in", "Create an account", "Open config file");
         //switch (n)
         //{
