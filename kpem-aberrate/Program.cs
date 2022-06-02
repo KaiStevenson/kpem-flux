@@ -75,7 +75,7 @@ class Program
             //TODO: Consider only sending the key when the user requests it
             if (rsaPublicKey != null)
             {
-                await Task.Delay(2500);
+                await Task.Delay(500);
                 Console.WriteLine("Sending RSA key to client");
                 SendMessage(user, new Message("sendrsa", new Message.Parameter("key", Convert.ToBase64String(rsaPublicKey))),
                     NetworkHelper.EncryptionMode.None);
@@ -174,6 +174,8 @@ class Program
                     {
                         Console.WriteLine("Authentication failed");
                     }
+                    SendMessage(user, new Message("authenticationresult",
+                        new Message.Parameter("result", authenticated ? "success" : "failure")), NetworkHelper.EncryptionMode.AES, user.AESKey);
                     break;
                 case "createaccount":
                     Console.WriteLine(String.Format("Creating a new account for user {0} with password {1}",

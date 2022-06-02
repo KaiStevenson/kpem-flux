@@ -88,6 +88,11 @@ public static class ConsoleHelper
             }
         }
     }
+    public static void WaitForKeypressToContinue()
+    {
+        Console.Write("Press any key to continue");
+        _ = Console.ReadKey(true);
+    }
     public static async Task PanDownAndClearAsync(int perLineWait)
     {
         var cDown = Console.CursorTop;
