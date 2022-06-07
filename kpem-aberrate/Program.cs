@@ -17,7 +17,7 @@ class Program
     {
         Console.WriteLine("Connecting to database");
         //TODO: Implement config file with database location
-        databaseHandler = new DatabaseHandler("/Users/kaistevenson/VS_Projects/kpem-flux/kpem-aberrate/users.db");
+        databaseHandler = new DatabaseHandler("/Users/kaistevenson/VS_Projects/KPEM/users.db");
         Console.WriteLine("Initializing RSA");
         rsa = RSA.Create(4096);
         rsaPrivateKey = rsa.ExportRSAPrivateKey();
