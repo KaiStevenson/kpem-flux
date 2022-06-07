@@ -24,7 +24,7 @@ public class DatabaseHandler
         command.Parameters.AddWithValue("$salt", Convert.ToBase64String(salt));
         command.ExecuteNonQuery();
     }
-    public UserInfo GetUserInfo(string username)
+    public UserInfo? GetUserInfo(string username)
     {
         var command = new SqliteCommand();
         command.Connection = connection;
@@ -32,13 +32,20 @@ public class DatabaseHandler
             FROM users
             WHERE name = $username";
         command.Parameters.AddWithValue("$username", username);
-        var reader = command.ExecuteReader();
-        reader.Read();
-        var hash = Convert.FromBase64String(reader.GetString(0));
-        var salt = Convert.FromBase64String(reader.GetString(1));
-        return new UserInfo(username, hash, salt);
+        try
+        {
+            var reader = command.ExecuteReader();
+            reader.Read();
+            var hash = Convert.FromBase64String(reader.GetString(0));
+            var salt = Convert.FromBase64String(reader.GetString(1));
+            return new UserInfo(username, hash, salt);
+        }
+        catch
+        {
+            return null;
+        }
     }
-    public struct UserInfo
+    public class UserInfo
     {
         public string username;
         public byte[] hash;

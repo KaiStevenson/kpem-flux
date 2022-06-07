@@ -16,18 +16,17 @@ public static class AuthenticationHelper
     public static bool TryAuthenticate(string username, string password, DatabaseHandler handler)
     {
         //TODO: Check to make sure the user exists before doing anything cryptographic
-        try
+        var userInfo = handler.GetUserInfo(username);
+        if (userInfo != null)
         {
-            var userInfo = handler.GetUserInfo(username);
             var salt = userInfo.salt;
             var hashAttempt = Hash(Encoding.UTF8.GetBytes(password), salt);
             Console.WriteLine(Convert.ToBase64String(hashAttempt));
             Console.WriteLine(Convert.ToBase64String(userInfo.hash));
             return Enumerable.SequenceEqual(hashAttempt, userInfo.hash);
         }
-        catch (SqliteException)
+        else
         {
-            Console.WriteLine("SQL error during authentication");
             return false;
         }
     }

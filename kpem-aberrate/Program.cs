@@ -13,7 +13,6 @@ class Program
     private RSA rsa;
     private byte[] rsaPrivateKey;
     private byte[] rsaPublicKey;
-
     public Program()
     {
         Console.WriteLine("Connecting to database");
@@ -52,7 +51,7 @@ class Program
                 Console.WriteLine("Attempting to handle incoming connection request");
                 var client = await listener.AcceptTcpClientAsync();
                 Console.WriteLine("Incoming connection accepted");
-                _ = HandleConnection(client);
+                await HandleConnection(client);
             }
             catch (Exception e)
             {
@@ -60,19 +59,15 @@ class Program
             }
         }
     }
-    private async Task HandleConnection(TcpClient incomingClient)
+    private async Task HandleConnection(TcpClient client)
     {
-        var remoteEndpoint = (IPEndPoint?)incomingClient.Client.RemoteEndPoint;
+        var remoteEndpoint = (IPEndPoint?)client.Client.RemoteEndPoint;
         if (remoteEndpoint != null)
         {
-            var outgoingClient = new TcpClient();
-            Console.WriteLine("Attempting to connect outgoing client");
-            await outgoingClient.ConnectAsync(remoteEndpoint.Address, 9852);
-            var user = new User(outgoingClient, incomingClient);
-            users.Add(user);
-            Console.WriteLine("Outgoing client connected, user added");
             //Delay to make sure the user is listening before we send our key
             //TODO: Consider only sending the key when the user requests it
+            var user = new User(client);
+            users.Add(user);
             if (rsaPublicKey != null)
             {
                 await Task.Delay(500);
@@ -87,18 +82,19 @@ class Program
         }
     }
 
-    private void SendMessage(User user, Message message, NetworkHelper.EncryptionMode mode, byte[]? key = null)
+    private void SendMessage(User user, Message message, NetworkHelper.EncryptionMode mode)
     {
         try
         {
-            NetworkHelper.WriteMessageToNetworkStream(user.outgoingClient.GetStream(), message, mode, key);
+            NetworkHelper.WriteMessageToNetworkStream(user.client.GetStream(), message, mode, user.AESKey);
         }
         catch
         {
             Console.WriteLine("Messaging user failed");
-            if (!user.incomingClient.Connected || !user.outgoingClient.Connected)
+            if (!user.client.Connected)
             {
                 Console.WriteLine("Removed user as they were already disconnected");
+                //TODO: This doesn't work! Can't modify the collection as it's already being iterated
                 RemoveUser(user);
             }
         }
@@ -110,7 +106,7 @@ class Program
         var removeList = new List<User>();
         foreach (var user in users)
         {
-            var incomingStream = user.incomingClient.GetStream();
+            var incomingStream = user.client.GetStream();
             if (incomingStream.DataAvailable)
             {
                 user.timeOfLastMessage = DateTime.UtcNow;
@@ -141,8 +137,7 @@ class Program
     }
     private void RemoveUser(User user)
     {
-        user.incomingClient.Client.Disconnect(true);
-        user.outgoingClient.Client.Disconnect(true);
+        user.client.Client.Disconnect(true);
         users.Remove(user);
     }
     //This method will handle every incoming message from a network stream. The user parameter is derived from the socket, but is probably not secure
@@ -152,6 +147,29 @@ class Program
         {
             var message = await NetworkHelper.GetMessageFromNetworkStreamAsync(ns, aesKey: user.AESKey, rsaKey: rsaPrivateKey);
             Console.WriteLine(String.Format("New message received with command {0} from user {1}", message.Command, user.username));
+            if (user.username != null)
+            {
+                //Only allow these commands if the user is authenticated
+                switch (message.Command)
+                {
+                    case "sendchatmessage":
+                        var targetUser = message.Content["target"];
+                        var databaseResult = databaseHandler.GetUserInfo(targetUser);
+                        var connectedUser = GetUserByName(targetUser);
+                        if (databaseResult != null)
+                        {
+                            //TODO: Message logging?
+                            if (connectedUser != null)
+                            {
+                                var content = message.Content["content"];
+                                SendMessage(connectedUser, new Message("receivechatmessage", new Message.Parameter("originatinguser", user.username),
+                                    new Message.Parameter("content", content)), NetworkHelper.EncryptionMode.AES);
+                            }
+                        }
+                        break;
+                }
+            }
+            //These commands can always be executed
             switch (message.Command)
             {
                 case "ping":
@@ -175,21 +193,37 @@ class Program
                         Console.WriteLine("Authentication failed");
                     }
                     SendMessage(user, new Message("authenticationresult",
-                        new Message.Parameter("result", authenticated ? "success" : "failure")), NetworkHelper.EncryptionMode.AES, user.AESKey);
+                        new Message.Parameter("result", authenticated ? "success" : "failure")), NetworkHelper.EncryptionMode.AES);
                     break;
                 case "createaccount":
                     Console.WriteLine(String.Format("Creating a new account for user {0} with password {1}",
                         message.Content["user"], message.Content["password"]));
                     AuthenticationHelper.CreateAccount(message.Content["user"], message.Content["password"], databaseHandler);
                     break;
+                case "getuserinfo":
+                    var databaseResult = databaseHandler.GetUserInfo(message.Content["name"]);
+                    var connectedResult = GetUserByName(message.Content["name"]);
+                    SendMessage(user, new Message("senduserinfo", new Message.Parameter("online", connectedResult != null ? "true" : "false"),
+                        new Message.Parameter("exists", databaseResult != null ? "true" : "false")), NetworkHelper.EncryptionMode.AES);
+                    break;
             }
         }
+    }
+    public User? GetUserByName(string username)
+    {
+        foreach (var user in users)
+        {
+            if (user.username == username)
+            {
+                return user;
+            }
+        }
+        return null;
     }
 }
 public class User
 {
-    public TcpClient outgoingClient;
-    public TcpClient incomingClient;
+    public TcpClient client;
     //The number of milliseconds since we've received a message from this user
     //At some point, the user will be asked to confirm that they're still connected
     //And will eventually be kicked
@@ -203,10 +237,9 @@ public class User
     //It's the client's responsibility to pass the server an AES key
     //The server will make its public RSA key available
     public byte[]? AESKey;
-    public User(TcpClient outgoingClient, TcpClient incomingClient)
+    public User(TcpClient client)
     {
-        this.outgoingClient = outgoingClient;
-        this.incomingClient = incomingClient;
+        this.client = client;
         timeOfLastMessage = DateTime.UtcNow;
     }
 }

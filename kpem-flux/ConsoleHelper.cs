@@ -30,7 +30,7 @@ public static class ConsoleHelper
             ClearLine(i);
         }
     }
-    public static string GetInput(string prompt = "Enter data", ObscurityType obscurity = ObscurityType.AllVisible)
+    public static string GetInput(string prompt = "", ObscurityType obscurity = ObscurityType.AllVisible)
     {
         Console.Write(String.Format("{0} >> ", prompt));
         string input = "";
@@ -39,6 +39,11 @@ public static class ConsoleHelper
             var k = Console.ReadKey(true);
             if (k.Key == ConsoleKey.Enter)
             {
+                if (obscurity == ObscurityType.LastCharOnly)
+                {
+                    Console.CursorLeft -= 1;
+                    Console.Write("*");
+                }
                 Console.Write("\r\n");
                 return input;
             }
@@ -61,9 +66,82 @@ public static class ConsoleHelper
                 {
                     Console.Write("*");
                 }
+                else if (obscurity == ObscurityType.LastCharOnly)
+                {
+                    if (input.Length > 0)
+                    {
+                        Console.CursorLeft -= 1;
+                        Console.Write("*");
+                    }
+                    Console.Write(k.KeyChar);
+                }
                 input += k.KeyChar;
             }
         }
+    }
+    //Be careful not to write anything while this is running
+    //TODO: This method probably sucks a lot. Fix it.
+    public static async Task<string> GetInputAsync(AsyncReaderInterruptToken interruptToken, string prompt = "")
+    {
+        Console.Write(String.Format("{0} >> ", prompt));
+        string input = "";
+        //Per keypress loop
+        while (true)
+        {
+            //Pass control to calling thread until a key is available
+            var cancellationSource = new CancellationTokenSource();
+            var readTask = ReadKeyAsync(true, cancellationSource.Token);
+            var interruptTask = interruptToken.GetInterrupt();
+            int i = await Task.Run(() => Task.WaitAny(readTask, interruptTask));
+            if (i == 0)
+            {
+                //This blocks, so make sure the task is completed when we get here.
+                var k = readTask.Result;
+                if (k.Key == ConsoleKey.Enter)
+                {
+                    Console.Write("\r\n");
+                    return input;
+                }
+                else if (k.Key == ConsoleKey.Backspace)
+                {
+                    if (input.Length > 0)
+                    {
+                        input = input.Substring(0, input.Length - 1);
+                        Console.CursorLeft -= 1;
+                        Console.Write("\x1B[1P");
+                    }
+                }
+                else if (k.Key == ConsoleKey.Escape)
+                {
+                    throw new UserCancelledOperationException();
+                }
+                else if (Regex.IsMatch(k.KeyChar.ToString(), "[ -~]+"))
+                {
+                    Console.Write(k.KeyChar);
+                    input += k.KeyChar;
+                }
+            }
+            //Interrupted
+            else if (i == 1)
+            {
+                var interruptLine = interruptTask!.Result;
+                ClearLine(Console.CursorTop);
+                Console.WriteLine(interruptLine);
+                Console.Write(String.Format("{0} >> {1}", prompt, input));
+                //Cancel the read attempt to prepare for the loop
+                cancellationSource.Cancel();
+            }
+        }
+    }
+    //Be very careful with this method
+    public static async Task<ConsoleKeyInfo> ReadKeyAsync(bool intercept, CancellationToken cancellation)
+    {
+        while (!Console.KeyAvailable && !cancellation.IsCancellationRequested)
+        {
+            await Task.Delay(25);
+        }
+        cancellation.ThrowIfCancellationRequested();
+        return Console.ReadKey(intercept);
     }
     public static bool GetBinaryChoice(string prompt = "Yes or no")
     {
@@ -107,12 +185,25 @@ public static class ConsoleHelper
         Console.Write("Press any key to continue");
         _ = Console.ReadKey(true);
     }
-    public static async Task PanDownAndClearAsync(int perLineWait)
+    //Effect duration is the time to scroll all the lines off of a full console
+    //If there are less lines, it'll execute quicker
+    public static void Clear()
+    {
+        Console.Clear();
+        //If necessary, clear the scrollback buffer
+        var termVar = Environment.GetEnvironmentVariable("TERM");
+        if (termVar != null && termVar.StartsWith("xterm"))
+        {
+            Console.Write("\x1b[3J");
+        }
+    }
+    public static async Task PanDownAndClearAsync(int effectDuration)
     {
         var cDown = Console.CursorTop;
         var cHeight = Console.WindowHeight;
         //If we haven't used a whole page, we don't need to scroll as far
         int scrollLength = cDown < cHeight ? cDown : cHeight;
+        var perLineWait = effectDuration / cHeight;
         //Make sure each line we write is scrolling the window
         Console.SetCursorPosition(0, cHeight);
         for (int i = 0; i < scrollLength; i++)
@@ -120,11 +211,34 @@ public static class ConsoleHelper
             Console.Write("\n");
             await Task.Delay(perLineWait);
         }
-        Console.Clear();
-        //If necessary, clear the scrollback buffer
-        if (Environment.GetEnvironmentVariable("TERM")!.StartsWith("xterm"))
+        Clear();
+    }
+    //Instantiate this object to define a point to which the UI should be refreshed, as in a loop
+    public class ConsoleClearPoint
+    {
+        private int clearFrom;
+        public ConsoleClearPoint()
         {
-            Console.Write("\x1b[3J");
+            clearFrom = Console.CursorTop;
+        }
+        public void Back()
+        {
+            var clearTo = Console.CursorTop;
+            ClearLines(clearFrom, clearTo + 1);
+            Console.SetCursorPosition(0, clearFrom);
+        }
+    }
+    public class AsyncReaderInterruptToken
+    {
+        private TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
+        public Task<string> GetInterrupt()
+        {
+            return tcs.Task;
+        }
+        public void InterruptWithContent(string content)
+        {
+            tcs.SetResult(content);
+            tcs = new TaskCompletionSource<string>();
         }
     }
     public enum ObscurityType
@@ -149,7 +263,7 @@ public class MenuLevel
     }
     public void EnterMenu()
     {
-        int cursorDownStart = Console.CursorTop;
+        var clearPoint = new ConsoleHelper.ConsoleClearPoint();
         if (items != null)
         {
             //Create a new temporary array that we can modify
@@ -173,16 +287,14 @@ public class MenuLevel
                 }
                 else if (tempItems[c].Mode == MenuItem.MenuItemMode.MenuLevelLink)
                 {
-                    ConsoleHelper.ClearLines(cursorDownStart, Console.CursorTop);
-                    Console.SetCursorPosition(0, cursorDownStart);
+                    clearPoint.Back();
                     tempItems[c].linkedLevel!.EnterMenu();
                 }
             }
             //Confirmation failed, reload the same menu level
             else
             {
-                ConsoleHelper.ClearLines(cursorDownStart, Console.CursorTop);
-                Console.SetCursorPosition(0, cursorDownStart);
+                clearPoint.Back();
                 EnterMenu();
             }
         }
@@ -219,5 +331,21 @@ public class MenuLevel
             Action,
             MenuLevelLink
         }
+    }
+}
+[Serializable]
+public class UserCancelledOperationException : Exception
+{
+    public UserCancelledOperationException()
+    {
+
+    }
+    public UserCancelledOperationException(string message) : base(message)
+    {
+
+    }
+    public UserCancelledOperationException(string message, Exception inner) : base(message, inner)
+    {
+
     }
 }
