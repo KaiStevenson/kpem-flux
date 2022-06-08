@@ -41,7 +41,7 @@ public static class ConsoleHelper
             {
                 if (obscurity == ObscurityType.LastCharOnly)
                 {
-                    Console.CursorLeft -= 1;
+                    Console.Write("\b");
                     Console.Write("*");
                 }
                 Console.Write("\r\n");
@@ -52,8 +52,7 @@ public static class ConsoleHelper
                 if (input.Length > 0)
                 {
                     input = input.Substring(0, input.Length - 1);
-                    Console.CursorLeft -= 1;
-                    Console.Write("\x1B[1P");
+                    Console.Write("\b \b");
                 }
             }
             else if (Regex.IsMatch(k.KeyChar.ToString(), "[ -~]+"))
@@ -70,7 +69,7 @@ public static class ConsoleHelper
                 {
                     if (input.Length > 0)
                     {
-                        Console.CursorLeft -= 1;
+                        Console.Write("\b");
                         Console.Write("*");
                     }
                     Console.Write(k.KeyChar);
@@ -107,8 +106,7 @@ public static class ConsoleHelper
                     if (input.Length > 0)
                     {
                         input = input.Substring(0, input.Length - 1);
-                        Console.CursorLeft -= 1;
-                        Console.Write("\x1B[1P");
+                        Console.Write("\b \b");
                     }
                 }
                 else if (k.Key == ConsoleKey.Escape)
