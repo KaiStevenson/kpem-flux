@@ -49,7 +49,7 @@ The following is a list of supported messages, with their command name, key-valu
 
 [authenticate] [ (user, string), (password, string) ] [attempts to sign in with a given username and password]
 
-[sendchatmessage] [ (target, string), (content, string) ] [sends a chat message to the targeted username]
+[sendchatmessage] [ (target, string), (content, string) ] [sends a chat message to the targeted username. this message is forwarded directly to the receiving client]
 
 ##### SERVER MESSAGES:
 
