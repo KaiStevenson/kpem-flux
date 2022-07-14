@@ -37,9 +37,20 @@ Once the JSON *message* is retrieved, it can be handled. The message contains a 
 
 The following is a list of supported messages, with their command name, key-values, and intended use:
 
-[COMMAND][KEY,VALUE][INFO]
+[COMMAND] [ (KEY, VALUETYPE -- {options} ) ] [INFO]
 
-[ping][N/A][requests the recepient return a (pong) message]
+##### SHARED MESSAGES:
 
-[pong[N/A][response to a (ping) message]
+[ping] [N/A] [requests the recepient return a (pong) message]
 
+[pong] [N/A] [response to a (ping) message]
+
+##### CLIENT MESSAGES:
+
+[authenticate] [ (user, string), (password, string) ] [attempts to sign in with a given username and password]
+
+[sendchatmessage] [ (target, string), (content, string) ] [sends a chat message to the targeted username]
+
+##### SERVER MESSAGES:
+
+[authenticationresult] [ (result, string -- {"success", "failure"} ) ] [response to an authenticate command; tells the client whether they are now signed in]
