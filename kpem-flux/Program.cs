@@ -12,26 +12,33 @@ class Program
         var aes = Aes.Create();
         var aesKey = aes.Key;
         ConsoleHelper.WriteLine("AES initialized");
-        var serverIP = ConsoleHelper.GetInput(prompt: "Server IP");
-        //Run this synchronously. We have to wait for a connection before proceeding.
-        var handlerTask = ConnectionHandler.CreateAsync(serverIP, aesKey);
-        handlerTask.Wait(5000);
-        handler = handlerTask.Result;
-        if (handler.Available)
+        while (true)
         {
-            ConsoleHelper.WriteLine(String.Format("Connected succesfully to {0}", serverIP));
-            ConsoleHelper.WriteLine("Waiting to receive the server's RSA key");
-            Message keyMessage = handler.GetMessageAsync("sendrsa", 10000).Result;
-            var rsaKey = Convert.FromBase64String(keyMessage.Content["key"]);
-            ConsoleHelper.WriteLine("Received RSA key " + keyMessage.Content["key"]);
-            ConsoleHelper.WriteLine("Encrypting and sending AES key " + Convert.ToBase64String(aesKey));
-            //encrypt AES key with server RSA
-            handler.SendMessage(new Message("sendaes", new Message.Parameter("key", Convert.ToBase64String(aesKey))),
-                NetworkHelper.EncryptionMode.RSA, rsaKey);
-        }
-        else //If the handler isn't available here, it probably timed out.
-        {
-            ConsoleHelper.WriteLine("Connection failed or timed out. Restart the application and try again");
+            try
+            {
+                var serverIP = ConsoleHelper.GetInput(prompt: "Server IP");
+                //Run this synchronously. We have to wait for a connection before proceeding.
+                var handlerTask = ConnectionHandler.CreateAsync(serverIP, aesKey);
+                handlerTask.Wait(5000);
+                handler = handlerTask.Result;
+                ConsoleHelper.WriteLine(String.Format("Connected succesfully to {0}", serverIP));
+                ConsoleHelper.WriteLine("Waiting to receive the server's RSA key");
+                Message keyMessage = handler.GetMessageAsync("sendrsa", 10000).Result;
+                var rsaKey = Convert.FromBase64String(keyMessage.Content["key"]);
+                ConsoleHelper.WriteLine("Received RSA key " + keyMessage.Content["key"]);
+                ConsoleHelper.WriteLine("Encrypting and sending AES key " + Convert.ToBase64String(aesKey));
+                //encrypt AES key with server RSA
+                handler.SendMessage(new Message("sendaes", new Message.Parameter("key", Convert.ToBase64String(aesKey))),
+                    NetworkHelper.EncryptionMode.RSA, rsaKey);
+                break;
+            }
+            catch
+            {
+
+                ConsoleHelper.WriteLine("Connection failed or timed out. Try again");
+                Thread.Sleep(1000);
+                Console.Clear();
+            }
         }
         ConsoleHelper.WriteLine("Exiting constructor");
         ConsoleHelper.WaitForKeypressToContinue();
@@ -67,7 +74,7 @@ class Program
                 new MenuLevel.MenuItem("Create account", CreateNewUser, askForConfirmation: true)
             };
             //Now run the menu
-            mainMenu.EnterMenu();            
+            mainMenu.EnterMenu();
         }
     }
     private string GetStatus()
@@ -174,7 +181,7 @@ class Program
             token = new ConsoleHelper.AsyncReaderInterruptToken();
             while (true)
             {
-                var getInputTask = ConsoleHelper.GetInputAsync(token, string.Format("[{0}]", handler.AuthenticatedUsername!));
+                var getInputTask = ConsoleHelper.GetInputAsync(token, String.Format("[{0}]", handler.AuthenticatedUsername!));
                 try
                 {
                     getInputTask.Wait();
